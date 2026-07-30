@@ -559,6 +559,27 @@
   #r-estimate-lines .ship-est-title{
     font-size:.8rem;font-weight:700;color:var(--ink-soft);margin-top:10px;
   }
+  .pay-result{
+    margin-top:18px;background:var(--card);border:2px solid var(--kyoho);
+    border-radius:20px;padding:26px 24px;
+  }
+  .pay-result-label{font-size:.85rem;color:var(--ink-soft);font-weight:700;margin-bottom:6px;}
+  .pay-result-amount{
+    font-family:'Zen Maru Gothic';font-weight:900;
+    font-size:clamp(2.2rem,6vw,2.8rem);color:var(--kyoho-dark);
+    line-height:1.2;margin-bottom:16px;
+  }
+  .pay-warning{
+    background:rgba(217,143,59,0.14);border:1px solid rgba(217,143,59,0.4);
+    border-radius:12px;padding:12px 14px;font-size:.85rem;color:var(--amber-dark);
+    font-weight:700;margin-bottom:20px;
+  }
+  .pay-method{
+    background:var(--paper-deep);border-radius:16px;padding:18px 20px;margin-bottom:14px;
+  }
+  .pay-method h4{font-size:.92rem;font-weight:700;margin-bottom:10px;color:var(--ink);}
+  .pay-method p{font-size:.85rem;color:var(--ink-soft);margin:0 0 6px;}
+  .pay-method .btn{margin-top:10px;}
   .estimate-box{
     margin-top:8px;background:var(--paper-deep);border-radius:16px;
     padding:20px 22px;
@@ -875,7 +896,7 @@
             <h3>お支払い金額の目安</h3>
             <div id="r-estimate-lines"></div>
             <div class="estimate-row estimate-total"><span>合計</span><strong id="est-total">－</strong></div>
-            <p class="estimate-hint">※あくまで目安です。正式な金額は内容確認時にご案内いたします。</p>
+            <p class="estimate-hint">※あくまで目安です。正式な金額は内容確認時にご案内いたします。<br>※価格は時価のため、年によって変動いたします（2026年はこの価格です）。</p>
           </div>
 
           <div class="form-actions">
@@ -884,6 +905,7 @@
             <button type="button" id="r-copy" class="btn btn-outline">内容をコピーする</button>
           </div>
           <p id="r-status" class="form-status" aria-live="polite"></p>
+          <div id="r-payment-result" style="display:none;"></div>
           <p class="form-note">送信ボタンを押すとご注文内容がまるぶ農園に届きます。ご注文内容に問題がなければ、こちらからのご連絡は基本的にございません。表示された合計金額でお間違いなくお支払いください。うまく送信できない場合は「内容をコピーする」からお問い合わせください。</p>
         </div>
       </form>
@@ -979,6 +1001,7 @@
     <div class="footer-bottom">
       <span>&copy; 2026 まるぶ農園</span>
       <span>山梨県山梨市 東666-1</span>
+      <span><a href="./tokushoho.html" style="color:inherit;opacity:.7;text-decoration:underline;">特定商取引法に基づく表記</a>　<a href="./privacy.html" style="color:inherit;opacity:.7;text-decoration:underline;">プライバシーポリシー</a></span>
     </div>
   </div>
 </footer>
@@ -1029,9 +1052,9 @@
   // ▼▼ GASをデプロイしたら、下記URLを発行された /exec のURLに差し替えてください ▼▼
   const GAS_ENDPOINT = 'https://script.google.com/macros/s/【ここにデプロイしたGASのURLを貼り付け】/exec';
   // ▼▼ Stripeで「顧客が金額を選択」タイプの決済用リンクを作成したら、発行されたURLに差し替えてください ▼▼
-  const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/【ここに作成した決済用リンクを貼り付け】';
+  const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/aFa4gzaQyb3w4NXbxJdwc00';
   // ▼▼ お振り込み先の情報（実際の口座情報に書き換えてください） ▼▼
-  const BANK_TRANSFER_INFO = '【銀行名】〇〇銀行　【支店名】〇〇支店（店番〇〇〇）<br>【口座種別】普通　【口座番号】〇〇〇〇〇〇〇　【口座名義】マルブノウエン';
+  const BANK_TRANSFER_INFO = '【銀行名】山梨中央銀行　【支店名】日下部支店<br>【口座種別】普通　【口座番号】783992　【口座名義】ノザワタケトシ<br>※振込手数料はお客様のご負担となります。';
 
   // ▼▼ スタッフ管理画面（?mode=staff）で使う合言葉。GASコード側のSTAFF_KEYと必ず同じ値にしてください ▼▼
   const STAFF_KEY = '09230813';
@@ -1242,8 +1265,8 @@
 
   // ▼▼ 商品代金（1kgあたり・円） ▼▼
   const PRICE_PER_KG = {
-    'シャインマスカット': 3000,
-    '巨峰': 2500,
+    'シャインマスカット': 3500,
+    '巨峰': 3000,
   };
   const ITEM_OPTIONS = Object.keys(PRICE_PER_KG);
   // ▼▼ 巨峰の受付終了日（毎年8月20日） ▼▼
@@ -1255,6 +1278,8 @@
   const SHIPPING_FLAT_RATE = 1500;
   // ▼▼ クール宅急便対象地域（沖縄・離島・九州・四国・北海道）の送料（円）… 実際の金額に書き換えてください ▼▼
   const SHIPPING_COOL_RATE = 1500;
+  // ▼▼ 熨斗（のし）をご希望の場合の追加料金（円・お届け先1件あたり） ▼▼
+  const NOSHI_FEE = 150;
   // クール宅急便対象の都道府県
   const COOL_PREFECTURES = [
     '北海道','沖縄県',
@@ -1527,6 +1552,19 @@
     addrField.appendChild(addrInput);
     block.appendChild(addrField);
 
+    const noshiField = document.createElement('div');
+    noshiField.className = 'field';
+    const noshiLabel = document.createElement('label');
+    noshiLabel.className = 'oc-check';
+    noshiLabel.style.cssText = 'display:flex;align-items:center;gap:8px;font-weight:400;';
+    const noshiCb = document.createElement('input');
+    noshiCb.type = 'checkbox'; noshiCb.className = 'ship-noshi';
+    noshiCb.addEventListener('change', updateEstimateAndTotals);
+    noshiLabel.appendChild(noshiCb);
+    noshiLabel.appendChild(document.createTextNode(`熨斗（のし）をつける（+${yen(NOSHI_FEE)}）`));
+    noshiField.appendChild(noshiLabel);
+    block.appendChild(noshiField);
+
     return block;
   }
 
@@ -1544,6 +1582,8 @@
       const goods = lines.reduce((sum, l) => sum + (PRICE_PER_KG[l.item] || 0) * l.qty, 0);
       const cool = isCoolPref(block.dataset.pref);
       const ship = cool ? SHIPPING_COOL_RATE : SHIPPING_FLAT_RATE;
+      const noshi = block.querySelector('.ship-noshi').checked;
+      const noshiFee = noshi ? NOSHI_FEE : 0;
       return {
         pref: block.dataset.pref,
         lines: lines,
@@ -1554,6 +1594,8 @@
         goods: goods,
         cool: cool,
         ship: ship,
+        noshi: noshi,
+        noshiFee: noshiFee,
       };
     });
   }
@@ -1576,7 +1618,13 @@
       shipRow.className = 'estimate-row';
       shipRow.innerHTML = `<span>送料（${s.cool ? 'クール宅急便' : '通常宅配'}）</span><strong>${yen(s.ship)}</strong>`;
       linesWrap.appendChild(shipRow);
-      grandTotal += s.goods + s.ship;
+      if (s.noshi){
+        const noshiRow = document.createElement('div');
+        noshiRow.className = 'estimate-row';
+        noshiRow.innerHTML = `<span>熨斗（のし）</span><strong>${yen(s.noshiFee)}</strong>`;
+        linesWrap.appendChild(noshiRow);
+      }
+      grandTotal += s.goods + s.ship + s.noshiFee;
     });
     document.getElementById('est-total').textContent = yen(grandTotal);
     return grandTotal;
@@ -1594,6 +1642,7 @@
     const shipments = getShipmentsDetailData();
     const goodsTotal = shipments.reduce((s, x) => s + x.goods, 0);
     const shipTotal = shipments.reduce((s, x) => s + x.ship, 0);
+    const noshiTotal = shipments.reduce((s, x) => s + x.noshiFee, 0);
     return {
       name: val('r-name'),
       tel: val('r-tel'),
@@ -1604,7 +1653,8 @@
       note: val('r-note'),
       goodsAmount: goodsTotal,
       shippingAmount: shipTotal,
-      totalAmount: goodsTotal + shipTotal,
+      noshiAmount: noshiTotal,
+      totalAmount: goodsTotal + shipTotal + noshiTotal,
     };
   }
 
@@ -1625,12 +1675,14 @@
       lines.push(`　郵便番号：${s.zip}`);
       lines.push(`　ご住所：${s.address}`);
       lines.push(`　ご注文：${s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / ')}`);
+      lines.push(`　熨斗（のし）：${s.noshi ? 'あり（+' + yen(s.noshiFee) + '）' : 'なし'}`);
       lines.push(`　商品代金目安：${yen(s.goods)}／送料目安：${yen(s.ship)}`);
       lines.push('');
     });
     lines.push(`発送予定：${data.shippingSchedule}`);
     lines.push(`商品代金合計目安：${yen(data.goodsAmount)}`);
     lines.push(`送料合計目安：${yen(data.shippingAmount)}`);
+    if (data.noshiAmount) lines.push(`熨斗代金合計：${yen(data.noshiAmount)}`);
     lines.push(`総合計金額目安：${yen(data.totalAmount)}`);
     lines.push(`備考：${data.note || '（なし）'}`);
     return lines.join('\n');
@@ -1661,6 +1713,7 @@
         note: data.note,
         goodsAmount: data.goodsAmount,
         shippingAmount: data.shippingAmount,
+        noshiAmount: data.noshiAmount,
         totalAmount: data.totalAmount,
         shipmentCount: data.shipments.length,
         summary: summaryText,
@@ -1674,6 +1727,7 @@
         params.append(`shipment${i + 1}_items`, s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / '));
         params.append(`shipment${i + 1}_goods`, s.goods);
         params.append(`shipment${i + 1}_shipping`, s.ship);
+        params.append(`shipment${i + 1}_noshi`, s.noshi ? 'あり' : 'なし');
         params.append(`shipment${i + 1}_cool`, s.cool ? 'クール' : '通常');
       });
       // GASのWeb Appは通常のCORSレスポンスを返さないため no-cors で送信します。
@@ -1684,17 +1738,31 @@
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString(),
       });
-      statusEl.innerHTML = 'ご注文を受け付けました。ご注文内容に問題がなければ、こちらからのご連絡は基本的にございません。<br>' +
-        '下記のいずれかの方法で、合計金額「<strong>' + yen(data.totalAmount) + '</strong>」を<u>正確に</u>お支払いください。<br><br>' +
-        '<strong>【お振り込みの場合】</strong><br>' + BANK_TRANSFER_INFO + '<br><br>' +
-        '<strong>【オンライン決済の場合】</strong><br>' +
-        '<a class="btn btn-primary btn-sm" style="margin-top:8px;" href="' + STRIPE_PAYMENT_LINK + '" target="_blank" rel="noopener">決済に進む（Stripe）</a>';
+      statusEl.textContent = 'ご注文を受け付けました。ご注文内容に問題がなければ、こちらからのご連絡は基本的にございません。';
+      const resultEl = document.getElementById('r-payment-result');
+      resultEl.innerHTML =
+        '<div class="pay-result">' +
+          '<p class="pay-result-label">お支払い総金額</p>' +
+          '<p class="pay-result-amount">' + yen(data.totalAmount) + '</p>' +
+          '<p class="pay-warning">⚠ 金額に相違がある場合、ご注文をお承りいたしかねます。必ず上記の金額と一致するようお支払いください。</p>' +
+          '<div class="pay-method">' +
+            '<h4>① クレジットカード決済をご希望の方はこちら</h4>' +
+            '<p>下のボタンからStripeの決済画面に進み、金額欄に <strong>' + yen(data.totalAmount) + '</strong> を手入力のうえ、決済を完了させてください。</p>' +
+            '<a class="btn btn-primary btn-sm" href="' + STRIPE_PAYMENT_LINK + '" target="_blank" rel="noopener">クレジットカード決済に進む（Stripe）</a>' +
+          '</div>' +
+          '<div class="pay-method">' +
+            '<h4>② 銀行振り込みをご希望の方はこちら</h4>' +
+            '<p>' + BANK_TRANSFER_INFO + '</p>' +
+          '</div>' +
+        '</div>';
+      resultEl.style.display = 'block';
+      resultEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       reserveForm.reset();
       stepDetail.style.display = 'none';
       stepQuick.style.display = 'block';
       renderShipmentsQuick();
     } catch (err) {
-      statusEl.textContent = '送信に失敗しました。お手数ですが「内容をコピーする」からFAXでもご連絡ください。';
+      statusEl.textContent = '送信に失敗しました。お手数ですが「内容をコピーする」の上、お電話（090-7236-0404）でご連絡ください。';
     } finally {
       submitBtn.disabled = false;
     }
