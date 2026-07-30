@@ -784,7 +784,7 @@
       <div class="sec-head">
         <span class="eyebrow" style="justify-content:center;">ご注文方法</span>
         <h2>ご注文は注文フォームから承っています</h2>
-        <p>大変恐れ入りますが、お電話でのご注文は承っておりません。下記の注文フォームよりお申し込みください。ご注文は<strong>5kgから</strong>とさせていただいております。発送はご注文受付から2〜7日以内に、ぶどうが一番良い状態のタイミングで農園にて手配いたします。</p>
+        <p>大変恐れ入りますが、お電話でのご注文は承っておりません。下記の注文フォームよりお申し込みください。ご注文は<strong>5kgから</strong>とさせていただいております。発送はご注文後1〜5日程で手配いたします。</p>
       </div>
 
       <div class="shipping-note">
@@ -799,7 +799,7 @@
 
       <div class="policy-note">
         <h3>発送・返品について</h3>
-        <p>発送時期は農園にて決定いたします。ご注文受付から2〜7日以内に、ぶどうが一番良い状態のタイミングで発送いたします。</p>
+        <p>発送時期は農園にて決定いたします。ご注文後1〜5日程で発送いたします。</p>
         <p>ぶどうは生ものの為、お客様都合による返品はお受けできません。<strong>万が一、品質不良があった場合は、お手数ですが到着後すぐに農園までご連絡ください。</strong></p>
       </div>
 
@@ -821,7 +821,7 @@
       <div class="sec-head">
         <span class="eyebrow" style="justify-content:center;">ご注文</span>
         <h2>注文フォーム</h2>
-        <p>ご注文はこちらのフォームからお願いしております（お電話でのご注文は承っておりません）。発送はご注文受付から2〜7日以内、ぶどうが一番良い状態のタイミングで手配いたします。合計金額（商品代金・送料）はフォーム送信後の画面に表示され、<strong>お振り込み</strong>または<strong>Stripeによるオンライン決済</strong>のいずれかでお支払いいただけます。</p>
+        <p>ご注文はこちらのフォームからお願いしております（お電話でのご注文は承っておりません）。発送はご注文後1〜5日程で手配いたします。合計金額（商品代金・送料）はフォーム送信後の画面に表示され、<strong>お振り込み</strong>または<strong>Stripeによるオンライン決済</strong>のいずれかでお支払いいただけます。</p>
       </div>
 
       <form id="reserve-form" class="form-card" novalidate>
@@ -837,7 +837,8 @@
           </div>
           <div class="field">
             <label for="r-email">メールアドレス</label>
-            <input type="email" id="r-email" name="email" placeholder="任意（返信先が異なる場合）">
+            <input type="email" id="r-email" name="email" placeholder="任意（追跡番号を知りたい方はご入力ください）">
+            <span class="hint">追跡番号をお知りになりたい方はご入力ください</span>
           </div>
         </div>
 
@@ -862,12 +863,7 @@
           <div id="r-shipments-detail"></div>
 
           <div class="field">
-            <label>ご希望の発送時期</label>
-            <div class="pill-group" role="radiogroup">
-              <label class="pill"><input type="radio" name="timing" id="timing-kyoho" value="巨峰：8月上旬〜中旬ごろ" checked> 巨峰：8月上旬〜中旬ごろ</label>
-              <label class="pill"><input type="radio" name="timing" value="シャインマスカット：8月中旬〜下旬ごろ"> マスカット：8月中旬〜下旬ごろ</label>
-              <label class="pill"><input type="radio" name="timing" value="どちらでもよい"> どちらでもよい</label>
-            </div>
+            <p class="hint" style="margin:0;">発送時期は選択いただけません。<strong>ご注文後1〜5日程で発送</strong>いたします。</p>
           </div>
 
           <div class="field">
@@ -1038,7 +1034,7 @@
   const BANK_TRANSFER_INFO = '【銀行名】〇〇銀行　【支店名】〇〇支店（店番〇〇〇）<br>【口座種別】普通　【口座番号】〇〇〇〇〇〇〇　【口座名義】マルブノウエン';
 
   // ▼▼ スタッフ管理画面（?mode=staff）で使う合言葉。GASコード側のSTAFF_KEYと必ず同じ値にしてください ▼▼
-  const STAFF_KEY = 'ここに好きな合言葉を設定してください';
+  const STAFF_KEY = '09230813';
 
   // ---------- スタッフ管理画面（?mode=staff でアクセスした場合のみ動作） ----------
   (function initStaffView(){
@@ -1244,10 +1240,10 @@
     loadOrders();
   })();
 
-  // ▼▼ 商品代金（1kgあたり・円）… 実際の価格に書き換えてください ▼▼
+  // ▼▼ 商品代金（1kgあたり・円） ▼▼
   const PRICE_PER_KG = {
-    'シャインマスカット': 0,
-    '巨峰': 0,
+    'シャインマスカット': 3000,
+    '巨峰': 2500,
   };
   const ITEM_OPTIONS = Object.keys(PRICE_PER_KG);
   // ▼▼ 巨峰の受付終了日（毎年8月20日） ▼▼
@@ -1427,18 +1423,6 @@
   shipCountEl.addEventListener('input', renderShipmentsQuick);
   renderShipmentsQuick();
 
-  // 巨峰の受付終了後は、発送時期の「巨峰」選択肢も無効化する
-  if (isKyohoClosed()){
-    const kyohoTimingEl = document.getElementById('timing-kyoho');
-    if (kyohoTimingEl){
-      kyohoTimingEl.disabled = true;
-      kyohoTimingEl.checked = false;
-      kyohoTimingEl.closest('label').style.opacity = '0.45';
-      const fallback = document.querySelector('input[name="timing"][value="どちらでもよい"]');
-      if (fallback) fallback.checked = true;
-    }
-  }
-
   // ---------- STEP切り替え ----------
   const stepQuick = document.getElementById('step-quick');
   const stepDetail = document.getElementById('step-detail');
@@ -1486,14 +1470,18 @@
 
       sameFirstCb.addEventListener('change', function(){
         const nameInput = block.querySelector('.ship-name');
+        const zipInput = block.querySelector('.ship-zip');
         const addrInput = block.querySelector('.ship-address');
+        const telInput = block.querySelector('.ship-tel');
         const firstBlock = detailContainer.querySelector('.ship-detail-block[data-idx="0"]');
         if (this.checked){
           nameInput.value = firstBlock.querySelector('.ship-name').value;
+          zipInput.value = firstBlock.querySelector('.ship-zip').value;
           addrInput.value = firstBlock.querySelector('.ship-address').value;
-          nameInput.readOnly = true; addrInput.readOnly = true;
+          telInput.value = firstBlock.querySelector('.ship-tel').value;
+          nameInput.readOnly = true; zipInput.readOnly = true; addrInput.readOnly = true; telInput.readOnly = true;
         } else {
-          nameInput.readOnly = false; addrInput.readOnly = false;
+          nameInput.readOnly = false; zipInput.readOnly = false; addrInput.readOnly = false; telInput.readOnly = false;
         }
         updateEstimateAndTotals();
       });
@@ -1509,12 +1497,32 @@
     nameField.appendChild(nameInput);
     block.appendChild(nameField);
 
+    const telField = document.createElement('div');
+    telField.className = 'field';
+    telField.innerHTML = '<label>お届け先電話番号 <span class="req">必須</span></label>';
+    const telInput = document.createElement('input');
+    telInput.type = 'tel'; telInput.className = 'ship-tel'; telInput.required = true;
+    telInput.placeholder = '090-1234-5678';
+    telInput.addEventListener('input', updateEstimateAndTotals);
+    telField.appendChild(telInput);
+    block.appendChild(telField);
+
+    const zipField = document.createElement('div');
+    zipField.className = 'field';
+    zipField.innerHTML = '<label>お届け先郵便番号 <span class="req">必須</span></label>';
+    const zipInput = document.createElement('input');
+    zipInput.type = 'text'; zipInput.className = 'ship-zip'; zipInput.required = true;
+    zipInput.placeholder = '000-0000';
+    zipInput.addEventListener('input', updateEstimateAndTotals);
+    zipField.appendChild(zipInput);
+    block.appendChild(zipField);
+
     const addrField = document.createElement('div');
     addrField.className = 'field';
     addrField.innerHTML = '<label>お届け先ご住所 <span class="req">必須</span></label>';
     const addrInput = document.createElement('textarea');
     addrInput.className = 'ship-address'; addrInput.required = true; addrInput.rows = 2;
-    addrInput.placeholder = '〒000-0000 山梨県〜';
+    addrInput.placeholder = '山梨県〜（郵便番号は含めなくてOKです）';
     addrInput.addEventListener('input', updateEstimateAndTotals);
     addrField.appendChild(addrInput);
     block.appendChild(addrField);
@@ -1540,6 +1548,8 @@
         pref: block.dataset.pref,
         lines: lines,
         name: block.querySelector('.ship-name').value.trim(),
+        tel: block.querySelector('.ship-tel').value.trim(),
+        zip: block.querySelector('.ship-zip').value.trim(),
         address: block.querySelector('.ship-address').value.trim(),
         goods: goods,
         cool: cool,
@@ -1590,7 +1600,7 @@
       email: val('r-email'),
       shipFrom: '山梨県山梨市東666-1（まるぶ農園）',
       shipments: shipments,
-      timing: radio('timing'),
+      shippingSchedule: 'ご注文後1〜5日程で発送',
       note: val('r-note'),
       goodsAmount: goodsTotal,
       shippingAmount: shipTotal,
@@ -1611,12 +1621,14 @@
     data.shipments.forEach((s, i) => {
       lines.push(`【お届け先${i + 1}】${s.pref}（${s.cool ? 'クール宅急便' : '通常宅配'}）`);
       lines.push(`　お名前：${s.name}`);
+      lines.push(`　電話番号：${s.tel}`);
+      lines.push(`　郵便番号：${s.zip}`);
       lines.push(`　ご住所：${s.address}`);
       lines.push(`　ご注文：${s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / ')}`);
       lines.push(`　商品代金目安：${yen(s.goods)}／送料目安：${yen(s.ship)}`);
       lines.push('');
     });
-    lines.push(`ご希望の発送時期：${data.timing}`);
+    lines.push(`発送予定：${data.shippingSchedule}`);
     lines.push(`商品代金合計目安：${yen(data.goodsAmount)}`);
     lines.push(`送料合計目安：${yen(data.shippingAmount)}`);
     lines.push(`総合計金額目安：${yen(data.totalAmount)}`);
@@ -1645,7 +1657,7 @@
         tel: data.tel,
         email: data.email,
         shipFrom: data.shipFrom,
-        timing: data.timing,
+        shippingSchedule: data.shippingSchedule,
         note: data.note,
         goodsAmount: data.goodsAmount,
         shippingAmount: data.shippingAmount,
@@ -1656,10 +1668,13 @@
       data.shipments.forEach((s, i) => {
         params.append(`shipment${i + 1}_pref`, s.pref);
         params.append(`shipment${i + 1}_name`, s.name);
+        params.append(`shipment${i + 1}_tel`, s.tel);
+        params.append(`shipment${i + 1}_zip`, s.zip);
         params.append(`shipment${i + 1}_address`, s.address);
         params.append(`shipment${i + 1}_items`, s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / '));
         params.append(`shipment${i + 1}_goods`, s.goods);
         params.append(`shipment${i + 1}_shipping`, s.ship);
+        params.append(`shipment${i + 1}_cool`, s.cool ? 'クール' : '通常');
       });
       // GASのWeb Appは通常のCORSレスポンスを返さないため no-cors で送信します。
       // レスポンス内容は読み取れませんが、送信自体は行われます。
