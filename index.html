@@ -559,6 +559,24 @@
   #r-estimate-lines .ship-est-title{
     font-size:.8rem;font-weight:700;color:var(--ink-soft);margin-top:10px;
   }
+  .complete-heading{
+    text-align:center;padding:8px 0 6px;
+  }
+  .complete-check{
+    width:64px;height:64px;margin:0 auto 14px;border-radius:50%;
+    background:var(--muscat);color:#fff;font-size:2rem;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 20px rgba(159,180,62,0.35);
+  }
+  .complete-heading h2{
+    font-family:'Zen Maru Gothic';font-weight:900;
+    font-size:clamp(1.5rem,4.5vw,2.1rem);color:var(--ink);
+  }
+  .complete-detail{
+    margin-top:18px;background:var(--card);border:1px solid var(--line);
+    border-radius:20px;padding:22px 24px;
+  }
+  .complete-detail h3{font-size:.95rem;font-weight:700;margin-bottom:10px;color:var(--kyoho-dark);}
   .pay-result{
     margin-top:18px;background:var(--card);border:2px solid var(--kyoho);
     border-radius:20px;padding:26px 24px;
@@ -932,13 +950,58 @@
 
             <div class="form-actions">
               <button type="button" id="r-back-btn" class="btn btn-outline">← 入力し直す</button>
-              <button type="submit" class="btn btn-primary">この内容で注文する</button>
+              <button type="button" id="r-to-payment-btn" class="btn btn-primary">次へ：お支払い方法を選択する</button>
               <button type="button" id="r-copy" class="btn btn-outline">内容をコピーする</button>
             </div>
+            <p id="r-copy-status" class="form-status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div id="step-payment" style="display:none;">
+          <div class="pay-result">
+            <p class="pay-result-label">お支払い総金額</p>
+            <p class="pay-result-amount" id="payment-total-display">－</p>
+          </div>
+
+          <div class="field">
+            <label>お支払い方法 <span class="req">必須</span></label>
+            <div class="pill-group" role="radiogroup">
+              <label class="pill"><input type="radio" name="paymentMethod" value="クレジットカード決済（Stripe）" id="pm-stripe" required> クレジットカード決済（Stripe）</label>
+              <label class="pill"><input type="radio" name="paymentMethod" value="銀行振込" id="pm-bank"> 銀行振込</label>
+            </div>
+          </div>
+
+          <div id="bank-extra-fields" style="display:none;">
+            <div class="field">
+              <label for="r-furikomi-name">お振込人名義（カタカナ）</label>
+              <input type="text" id="r-furikomi-name" placeholder="ヤマナシ タロウ">
+              <label class="oc-check" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;font-size:.88rem;color:var(--ink-soft);">
+                <input type="checkbox" id="r-furikomi-same"> ご注文者様と同じ
+              </label>
+            </div>
+            <div class="field">
+              <label>領収証について</label>
+              <div class="pill-group" role="radiogroup">
+                <label class="pill"><input type="radio" name="receipt" value="希望する" id="receipt-yes"> 領収証を希望する</label>
+                <label class="pill"><input type="radio" name="receipt" value="希望しない" id="receipt-no"> 希望しない</label>
+              </div>
+            </div>
+          </div>
+
+          <div id="stripe-extra-note" style="display:none;">
+            <p class="hint">送信後、新しいタブでStripeの決済画面が開きます。決済が完了したら、このタブ（画面）にお戻りください。クレジットカード決済の領収証は、Stripeから自動でメール送信されます。</p>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="r-back-to-detail-btn" class="btn btn-outline">← 入力し直す</button>
+            <button type="submit" class="btn btn-primary" id="r-final-submit-btn">この内容で注文を確定する</button>
           </div>
           <p id="r-status" class="form-status" aria-live="polite"></p>
-          <div id="r-payment-result" style="display:none;"></div>
-          <p class="form-note">送信ボタンを押すとご注文内容がまるぶ農園に届きます。ご注文内容に問題がなければ、こちらからのご連絡は基本的にございません。表示された合計金額でお間違いなくお支払いください。うまく送信できない場合は「内容をコピーする」からお問い合わせください。</p>
+          <p class="form-note">送信ボタンを押すとご注文内容がまるぶ農園に届きます。ご注文内容に問題がなければ、こちらからのご連絡は基本的にございません。表示された合計金額でお間違いなくお支払いください。</p>
+        </div>
+
+        <div id="step-complete" style="display:none;">
+          <div id="r-payment-result"></div>
         </div>
       </form>
     </div>
@@ -1492,6 +1555,8 @@
   // ---------- STEP切り替え ----------
   const stepQuick = document.getElementById('step-quick');
   const stepDetail = document.getElementById('step-detail');
+  const stepPayment = document.getElementById('step-payment');
+  const stepComplete = document.getElementById('step-complete');
   const detailContainer = document.getElementById('r-shipments-detail');
 
   nextBtn.addEventListener('click', function(){
@@ -1729,6 +1794,8 @@
     const goodsTotal = shipments.reduce((s, x) => s + x.goods, 0);
     const shipTotal = shipments.reduce((s, x) => s + x.ship, 0);
     const noshiTotal = shipments.reduce((s, x) => s + x.noshiFee, 0);
+    const paymentMethod = radio('paymentMethod');
+    const isBank = paymentMethod === '銀行振込';
     return {
       name: val('r-name'),
       tel: val('r-tel'),
@@ -1741,8 +1808,55 @@
       shippingAmount: shipTotal,
       noshiAmount: noshiTotal,
       totalAmount: goodsTotal + shipTotal + noshiTotal,
+      paymentMethod: paymentMethod,
+      furikomiName: isBank ? val('r-furikomi-name') : '',
+      receiptChoice: isBank ? radio('receipt') : '',
     };
   }
+
+  // ---------- STEP：詳細入力 → 支払い方法選択 ----------
+  document.getElementById('r-to-payment-btn').addEventListener('click', function(){
+    if (!reserveForm.checkValidity()){
+      reserveForm.reportValidity();
+      return;
+    }
+    const data = buildReserveData();
+    document.getElementById('payment-total-display').textContent = yen(data.totalAmount);
+    stepDetail.style.display = 'none';
+    stepPayment.style.display = 'block';
+    stepPayment.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('r-back-to-detail-btn').addEventListener('click', function(){
+    stepPayment.style.display = 'none';
+    stepDetail.style.display = 'block';
+  });
+
+  const bankExtraFields = document.getElementById('bank-extra-fields');
+  const stripeExtraNote = document.getElementById('stripe-extra-note');
+  const furikomiNameInput = document.getElementById('r-furikomi-name');
+  const receiptYes = document.getElementById('receipt-yes');
+  const receiptNo = document.getElementById('receipt-no');
+
+  document.querySelectorAll('input[name="paymentMethod"]').forEach((el) => {
+    el.addEventListener('change', function(){
+      const isBank = this.value === '銀行振込';
+      bankExtraFields.style.display = isBank ? 'block' : 'none';
+      stripeExtraNote.style.display = isBank ? 'none' : 'block';
+      furikomiNameInput.required = isBank;
+      receiptYes.required = isBank;
+      receiptNo.required = isBank;
+    });
+  });
+
+  document.getElementById('r-furikomi-same').addEventListener('change', function(){
+    if (this.checked){
+      furikomiNameInput.value = document.getElementById('r-name').value;
+      furikomiNameInput.readOnly = true;
+    } else {
+      furikomiNameInput.readOnly = false;
+    }
+  });
 
   function buildReserveText(data){
     const lines = [
@@ -1772,6 +1886,11 @@
     lines.push(`送料合計目安：${yen(data.shippingAmount)}`);
     if (data.noshiAmount) lines.push(`熨斗代金合計：${yen(data.noshiAmount)}`);
     lines.push(`総合計金額目安：${yen(data.totalAmount)}`);
+    lines.push(`お支払い方法：${data.paymentMethod}`);
+    if (data.paymentMethod === '銀行振込'){
+      lines.push(`お振込人名義：${data.furikomiName}`);
+      lines.push(`領収証：${data.receiptChoice}`);
+    }
     lines.push(`備考：${data.note || '（なし）'}`);
     return lines.join('\n');
   }
@@ -1787,7 +1906,11 @@
       statusEl.textContent = 'お届け先の情報が見つかりません。入力し直してください。';
       return;
     }
-    const submitBtn = reserveForm.querySelector('button[type="submit"]');
+    if (data.paymentMethod === '未選択'){
+      statusEl.textContent = 'お支払い方法を選択してください。';
+      return;
+    }
+    const submitBtn = document.getElementById('r-final-submit-btn');
     submitBtn.disabled = true;
     statusEl.textContent = '送信しています…';
     try {
@@ -1804,6 +1927,9 @@
         noshiAmount: data.noshiAmount,
         totalAmount: data.totalAmount,
         shipmentCount: data.shipments.length,
+        paymentMethod: data.paymentMethod,
+        furikomiName: data.furikomiName,
+        receiptChoice: data.receiptChoice,
         summary: summaryText,
       });
       data.shipments.forEach((s, i) => {
@@ -1828,40 +1954,70 @@
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString(),
       });
-      statusEl.textContent = 'ご注文を受け付けました。ご注文内容に問題がなければ、こちらからのご連絡は基本的にございません。';
+
+      const isBank = data.paymentMethod === '銀行振込';
+      let paymentBlock = '';
+      if (isBank){
+        paymentBlock =
+          '<div class="pay-method">' +
+            '<h4>銀行振り込み</h4>' +
+            BANK_TRANSFER_INFO +
+            '<p style="margin-top:10px;">お振込人名義：<strong>' + data.furikomiName + '</strong>／領収証：<strong>' + data.receiptChoice + '</strong></p>' +
+          '</div>';
+      } else {
+        paymentBlock =
+          '<div class="pay-method">' +
+            '<h4>クレジットカード決済（Stripe）</h4>' +
+            '<p>下のボタンからStripeの決済画面に進み、金額欄に <strong>' + yen(data.totalAmount) + '</strong> を手入力のうえ、決済を完了させてください。決済後は、このタブ（画面）にお戻りください。</p>' +
+            '<a class="btn btn-primary btn-sm" href="' + STRIPE_PAYMENT_LINK + '" target="_blank" rel="noopener">クレジットカード決済に進む（Stripe）</a>' +
+          '</div>';
+      }
+
+      const shipmentSummaryHtml = data.shipments.map((s, i) =>
+        '<div class="oc-summary" style="margin-top:8px;">' +
+          '【お届け先' + (i + 1) + '】' + s.pref + '（' + (s.cool ? 'クール宅急便' : '通常宅配') + '）\n' +
+          'お名前：' + s.name + '\n' +
+          'ご住所：〒' + s.zip + ' ' + s.address + '\n' +
+          'ご注文：' + s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / ') + '\n' +
+          '熨斗：' + (s.noshi ? 'あり' : 'なし') + '／お届け時間帯：' + s.timeSlot +
+        '</div>'
+      ).join('');
+
       const resultEl = document.getElementById('r-payment-result');
       resultEl.innerHTML =
+        '<div class="complete-heading">' +
+          '<div class="complete-check">✓</div>' +
+          '<h2>ご注文が完了しました！</h2>' +
+        '</div>' +
         '<div class="pay-result">' +
           '<p class="pay-result-label">お支払い総金額</p>' +
           '<p class="pay-result-amount">' + yen(data.totalAmount) + '</p>' +
           '<p class="pay-warning">⚠ 金額に相違がある場合、ご注文をお承りいたしかねます。必ず上記の金額と一致するようお支払いください。</p>' +
-          '<div class="pay-method">' +
-            '<h4>① クレジットカード決済をご希望の方はこちら</h4>' +
-            '<p>下のボタンからStripeの決済画面に進み、金額欄に <strong>' + yen(data.totalAmount) + '</strong> を手入力のうえ、決済を完了させてください。</p>' +
-            '<a class="btn btn-primary btn-sm" href="' + STRIPE_PAYMENT_LINK + '" target="_blank" rel="noopener">クレジットカード決済に進む（Stripe）</a>' +
-          '</div>' +
-          '<div class="pay-method">' +
-            '<h4>② 銀行振り込みをご希望の方はこちら</h4>' +
-            BANK_TRANSFER_INFO +
-          '</div>' +
+          paymentBlock +
+        '</div>' +
+        '<div class="complete-detail">' +
+          '<h3>送信内容の詳細</h3>' +
+          '<p class="oc-row">ご注文者様：' + data.name + '（' + data.tel + '）</p>' +
+          shipmentSummaryHtml +
         '</div>';
-      resultEl.style.display = 'block';
-      document.getElementById('step-detail-fields').style.display = 'none';
-      resultEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      stepPayment.style.display = 'none';
+      stepComplete.style.display = 'block';
+      stepComplete.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
-      statusEl.textContent = '送信に失敗しました。お手数ですが「内容をコピーする」の上、お電話（090-7236-0404）でご連絡ください。';
+      statusEl.textContent = '送信に失敗しました。お手数ですがお電話（090-7236-0404）でご連絡ください。';
     } finally {
       submitBtn.disabled = false;
     }
   });
 
   document.getElementById('r-copy').addEventListener('click', async function(){
+    const copyStatusEl = document.getElementById('r-copy-status');
     const text = buildReserveText(buildReserveData());
     try{
       await navigator.clipboard.writeText(text);
-      statusEl.textContent = 'ご注文内容をコピーしました。お電話・FAXでもご連絡いただけます。';
+      copyStatusEl.textContent = 'ご注文内容をコピーしました。';
     }catch(err){
-      statusEl.textContent = 'コピーできませんでした。お手数ですが手入力にてご連絡ください。';
+      copyStatusEl.textContent = 'コピーできませんでした。お手数ですが手入力にてご連絡ください。';
     }
   });
 </script>
