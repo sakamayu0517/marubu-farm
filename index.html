@@ -1815,9 +1815,20 @@
   }
 
   // ---------- STEP：詳細入力 → 支払い方法選択 ----------
+  function validateContainer(containerEl){
+    const fields = containerEl.querySelectorAll('input, select, textarea');
+    for (const field of fields){
+      if (!field.checkValidity()){
+        field.reportValidity();
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+      }
+    }
+    return true;
+  }
+
   document.getElementById('r-to-payment-btn').addEventListener('click', function(){
-    if (!reserveForm.checkValidity()){
-      reserveForm.reportValidity();
+    if (!validateContainer(document.getElementById('step-detail-fields'))){
       return;
     }
     const data = buildReserveData();
