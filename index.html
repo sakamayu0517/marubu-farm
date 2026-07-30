@@ -911,28 +911,30 @@
 
         <!-- STEP 2: 詳細入力 -->
         <div id="step-detail" style="display:none;">
-          <div id="r-shipments-detail"></div>
+          <div id="step-detail-fields">
+            <div id="r-shipments-detail"></div>
 
-          <div class="field">
-            <p class="hint" style="margin:0;">発送時期は選択いただけません。<strong>ご注文後1〜5日程で発送</strong>いたします。</p>
-          </div>
+            <div class="field">
+              <p class="hint" style="margin:0;">発送時期は選択いただけません。<strong>ご注文後1〜5日程で発送</strong>いたします。</p>
+            </div>
 
-          <div class="field">
-            <label for="r-note">備考</label>
-            <textarea id="r-note" name="note" rows="3" placeholder="贈答用の熨斗希望、お届け希望日など"></textarea>
-          </div>
+            <div class="field">
+              <label for="r-note">備考</label>
+              <textarea id="r-note" name="note" rows="3" placeholder="贈答用の熨斗希望、お届け希望日など"></textarea>
+            </div>
 
-          <div class="estimate-box" id="r-estimate">
-            <h3>お支払い金額の目安</h3>
-            <div id="r-estimate-lines"></div>
-            <div class="estimate-row estimate-total"><span>合計</span><strong id="est-total">－</strong></div>
-            <p class="estimate-hint">※価格は時価のため、年によって変動いたします（2026年はこの価格です）。</p>
-          </div>
+            <div class="estimate-box" id="r-estimate">
+              <h3>お支払い金額の目安</h3>
+              <div id="r-estimate-lines"></div>
+              <div class="estimate-row estimate-total"><span>合計</span><strong id="est-total">－</strong></div>
+              <p class="estimate-hint">※価格は時価のため、年によって変動いたします（2026年はこの価格です）。</p>
+            </div>
 
-          <div class="form-actions">
-            <button type="button" id="r-back-btn" class="btn btn-outline">← 入力し直す</button>
-            <button type="submit" class="btn btn-primary">この内容で注文する</button>
-            <button type="button" id="r-copy" class="btn btn-outline">内容をコピーする</button>
+            <div class="form-actions">
+              <button type="button" id="r-back-btn" class="btn btn-outline">← 入力し直す</button>
+              <button type="submit" class="btn btn-primary">この内容で注文する</button>
+              <button type="button" id="r-copy" class="btn btn-outline">内容をコピーする</button>
+            </div>
           </div>
           <p id="r-status" class="form-status" aria-live="polite"></p>
           <div id="r-payment-result" style="display:none;"></div>
@@ -1844,11 +1846,8 @@
           '</div>' +
         '</div>';
       resultEl.style.display = 'block';
+      document.getElementById('step-detail-fields').style.display = 'none';
       resultEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      reserveForm.reset();
-      stepDetail.style.display = 'none';
-      stepQuick.style.display = 'block';
-      renderShipmentsQuick();
     } catch (err) {
       statusEl.textContent = '送信に失敗しました。お手数ですが「内容をコピーする」の上、お電話（090-7236-0404）でご連絡ください。';
     } finally {
