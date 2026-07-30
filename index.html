@@ -815,12 +815,12 @@
           <tr><th>沖縄・離島・九州・四国・北海道</th><td>クール宅急便<span class="ship-tag ship-tag--cool">クール便</span></td></tr>
           <tr><th>上記以外の地域</th><td>¥1,500<span class="ship-tag ship-tag--normal">通常宅配</span></td></tr>
         </table>
-        <p>離島（佐渡島・五島列島・種子島・屋久島など）へのお届けをご希望の場合は、注文フォームの備考欄にその旨をご記入ください。</p>
+        <p>離島（伊豆諸島・小笠原諸島・佐渡島・五島列島・種子島・屋久島など）へお届けの場合は、注文フォームのお届け先ごとにある「離島へのお届けです」にチェックを入れてください。都道府県の選択だけでは離島を自動判定できないためです。</p>
       </div>
 
       <div class="policy-note">
         <h3>発送・返品について</h3>
-        <p>発送時期は農園にて決定いたします。ご注文後1〜5日程で発送いたします。</p>
+        <p>発送日はご指定いただけません。ぶどうが最も良い状態の時期に、ご注文後1〜5日程で発送いたします。お届け時間帯（午前中〜19-21時）のみ、お届け先ごとにご指定いただけます。</p>
         <p>ぶどうは生ものの為、お客様都合による返品はお受けできません。<strong>万が一、品質不良があった場合は、お手数ですが到着後すぐに農園までご連絡ください。</strong></p>
       </div>
 
@@ -860,6 +860,18 @@
             <label for="r-email">メールアドレス</label>
             <input type="email" id="r-email" name="email" placeholder="任意（追跡番号を知りたい方はご入力ください）">
             <span class="hint">追跡番号をお知りになりたい方はご入力ください</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-my-zip">ご注文者様ご自身の郵便番号</label>
+            <input type="text" id="r-my-zip" placeholder="000-0000">
+            <span class="hint">ご自身のお届け先がある場合のみご入力ください（任意）</span>
+          </div>
+          <div class="field">
+            <label for="r-my-address">ご注文者様ご自身のご住所</label>
+            <input type="text" id="r-my-address" placeholder="山梨県〜">
           </div>
         </div>
 
@@ -907,7 +919,7 @@
             <h3>お支払い金額の目安</h3>
             <div id="r-estimate-lines"></div>
             <div class="estimate-row estimate-total"><span>合計</span><strong id="est-total">－</strong></div>
-            <p class="estimate-hint">※あくまで目安です。正式な金額は内容確認時にご案内いたします。<br>※価格は時価のため、年によって変動いたします（2026年はこの価格です）。</p>
+            <p class="estimate-hint">※価格は時価のため、年によって変動いたします（2026年はこの価格です）。</p>
           </div>
 
           <div class="form-actions">
@@ -1494,28 +1506,27 @@
     title.innerHTML = `お届け先 ${index + 1}<span class="ship-detail-summary">${shipQuick.pref}・${itemsSummaryText(shipQuick.lines)}</span>`;
     block.appendChild(title);
 
-    if (index > 0){
+    {
       const checks = document.createElement('div');
       checks.className = 'ship-detail-checks';
-      const sameFirstLabel = document.createElement('label');
-      const sameFirstCb = document.createElement('input');
-      sameFirstCb.type = 'checkbox'; sameFirstCb.className = 'same-as-first';
-      sameFirstLabel.appendChild(sameFirstCb);
-      sameFirstLabel.appendChild(document.createTextNode('1件目と同じお届け先にする'));
-      checks.appendChild(sameFirstLabel);
+      const sameOrdererLabel = document.createElement('label');
+      const sameOrdererCb = document.createElement('input');
+      sameOrdererCb.type = 'checkbox'; sameOrdererCb.className = 'same-as-orderer';
+      sameOrdererLabel.appendChild(sameOrdererCb);
+      sameOrdererLabel.appendChild(document.createTextNode('ご注文者様（ご自身）と同じお届け先にする'));
+      checks.appendChild(sameOrdererLabel);
       block.appendChild(checks);
 
-      sameFirstCb.addEventListener('change', function(){
+      sameOrdererCb.addEventListener('change', function(){
         const nameInput = block.querySelector('.ship-name');
         const zipInput = block.querySelector('.ship-zip');
         const addrInput = block.querySelector('.ship-address');
         const telInput = block.querySelector('.ship-tel');
-        const firstBlock = detailContainer.querySelector('.ship-detail-block[data-idx="0"]');
         if (this.checked){
-          nameInput.value = firstBlock.querySelector('.ship-name').value;
-          zipInput.value = firstBlock.querySelector('.ship-zip').value;
-          addrInput.value = firstBlock.querySelector('.ship-address').value;
-          telInput.value = firstBlock.querySelector('.ship-tel').value;
+          nameInput.value = document.getElementById('r-name').value;
+          telInput.value = document.getElementById('r-tel').value;
+          zipInput.value = document.getElementById('r-my-zip').value;
+          addrInput.value = document.getElementById('r-my-address').value;
           nameInput.readOnly = true; zipInput.readOnly = true; addrInput.readOnly = true; telInput.readOnly = true;
         } else {
           nameInput.readOnly = false; zipInput.readOnly = false; addrInput.readOnly = false; telInput.readOnly = false;
@@ -1577,6 +1588,48 @@
     noshiField.appendChild(noshiLabel);
     block.appendChild(noshiField);
 
+    const islandField = document.createElement('div');
+    islandField.className = 'field';
+    const islandLabel = document.createElement('label');
+    islandLabel.className = 'oc-check';
+    islandLabel.style.cssText = 'display:flex;align-items:center;gap:8px;font-weight:400;';
+    const islandCb = document.createElement('input');
+    islandCb.type = 'checkbox'; islandCb.className = 'ship-island';
+    islandCb.addEventListener('change', updateEstimateAndTotals);
+    islandLabel.appendChild(islandCb);
+    islandLabel.appendChild(document.createTextNode('離島へのお届けです（伊豆諸島・小笠原諸島・佐渡島・五島列島など）'));
+    islandField.appendChild(islandLabel);
+    const islandHint = document.createElement('p');
+    islandHint.className = 'hint';
+    islandHint.style.marginTop = '6px';
+    islandHint.textContent = '都道府県の選択だけでは離島を判定できないため、該当する場合は必ずチェックしてください。クール宅急便・追加料金の対象になります。';
+    islandField.appendChild(islandHint);
+    block.appendChild(islandField);
+
+    const timeField = document.createElement('div');
+    timeField.className = 'field';
+    timeField.innerHTML = '<label>お届け時間帯</label>';
+    const timeSelect = document.createElement('select');
+    timeSelect.className = 'ship-timeslot';
+    [
+      ['午前中', '午前中（おすすめ）'],
+      ['14-16', '14:00〜16:00'],
+      ['16-18', '16:00〜18:00'],
+      ['18-20', '18:00〜20:00'],
+      ['19-21', '19:00〜21:00'],
+    ].forEach(([value, label]) => {
+      const opt = document.createElement('option');
+      opt.value = value; opt.textContent = label;
+      timeSelect.appendChild(opt);
+    });
+    timeField.appendChild(timeSelect);
+    const timeHint = document.createElement('p');
+    timeHint.className = 'hint';
+    timeHint.style.marginTop = '6px';
+    timeHint.textContent = 'お届け日はご指定いただけません。ぶどうが最も良い状態の時期に発送いたします。';
+    timeField.appendChild(timeHint);
+    block.appendChild(timeField);
+
     return block;
   }
 
@@ -1592,10 +1645,12 @@
     return Array.from(detailContainer.querySelectorAll('.ship-detail-block')).map((block) => {
       const lines = JSON.parse(block.dataset.lines);
       const goods = lines.reduce((sum, l) => sum + (PRICE_PER_KG[l.item] || 0) * l.qty, 0);
-      const cool = isCoolPref(block.dataset.pref);
+      const isIsland = block.querySelector('.ship-island').checked;
+      const cool = isCoolPref(block.dataset.pref) || isIsland;
       const ship = cool ? SHIPPING_COOL_RATE : SHIPPING_FLAT_RATE;
       const noshi = block.querySelector('.ship-noshi').checked;
       const noshiFee = noshi ? NOSHI_FEE : 0;
+      const timeSlot = block.querySelector('.ship-timeslot').value;
       return {
         pref: block.dataset.pref,
         lines: lines,
@@ -1608,6 +1663,8 @@
         ship: ship,
         noshi: noshi,
         noshiFee: noshiFee,
+        timeSlot: timeSlot,
+        isIsland: isIsland,
       };
     });
   }
@@ -1688,6 +1745,8 @@
       lines.push(`　ご住所：${s.address}`);
       lines.push(`　ご注文：${s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / ')}`);
       lines.push(`　熨斗（のし）：${s.noshi ? 'あり（+' + yen(s.noshiFee) + '）' : 'なし'}`);
+      lines.push(`　お届け時間帯：${s.timeSlot}`);
+      lines.push(`　離島：${s.isIsland ? 'あり' : 'なし'}`);
       lines.push(`　商品代金目安：${yen(s.goods)}／送料目安：${yen(s.ship)}`);
       lines.push('');
     });
@@ -1740,6 +1799,8 @@
         params.append(`shipment${i + 1}_goods`, s.goods);
         params.append(`shipment${i + 1}_shipping`, s.ship);
         params.append(`shipment${i + 1}_noshi`, s.noshi ? 'あり' : 'なし');
+        params.append(`shipment${i + 1}_timeslot`, s.timeSlot);
+        params.append(`shipment${i + 1}_island`, s.isIsland ? 'あり' : 'なし');
         params.append(`shipment${i + 1}_cool`, s.cool ? 'クール' : '通常');
       });
       // GASのWeb Appは通常のCORSレスポンスを返さないため no-cors で送信します。
