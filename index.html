@@ -579,7 +579,14 @@
   }
   .pay-method h4{font-size:.92rem;font-weight:700;margin-bottom:10px;color:var(--ink);}
   .pay-method p{font-size:.85rem;color:var(--ink-soft);margin:0 0 6px;}
-  .pay-method .btn{margin-top:10px;}
+  .pay-method .btn{
+    margin-top:10px;white-space:normal;width:100%;
+    justify-content:center;text-align:center;line-height:1.4;
+  }
+  .bank-info{font-size:.85rem;color:var(--ink-soft);}
+  .bank-info .row{display:flex;flex-wrap:wrap;gap:4px 8px;margin-bottom:4px;}
+  .bank-info .row .k{font-weight:700;color:var(--ink);flex:none;}
+  .bank-info .note{margin-top:8px;font-size:.8rem;}
   .estimate-box{
     margin-top:8px;background:var(--paper-deep);border-radius:16px;
     padding:20px 22px;
@@ -1077,7 +1084,15 @@
   // ▼▼ Stripeで「顧客が金額を選択」タイプの決済用リンクを作成したら、発行されたURLに差し替えてください ▼▼
   const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/aFa4gzaQyb3w4NXbxJdwc00';
   // ▼▼ お振り込み先の情報（実際の口座情報に書き換えてください） ▼▼
-  const BANK_TRANSFER_INFO = '【銀行名】山梨中央銀行　【支店名】日下部支店<br>【口座種別】普通　【口座番号】783992　【口座名義】ノザワタケトシ<br>※振込手数料はお客様のご負担となります。';
+  const BANK_TRANSFER_INFO =
+    '<div class="bank-info">' +
+      '<div class="row"><span class="k">銀行名</span><span>山梨中央銀行</span></div>' +
+      '<div class="row"><span class="k">支店名</span><span>日下部支店</span></div>' +
+      '<div class="row"><span class="k">口座種別</span><span>普通</span></div>' +
+      '<div class="row"><span class="k">口座番号</span><span>783992</span></div>' +
+      '<div class="row"><span class="k">口座名義</span><span>ノザワ タケトシ</span></div>' +
+      '<p class="note">※振込手数料はお客様のご負担となります。</p>' +
+    '</div>';
 
   // ▼▼ スタッフ管理画面（?mode=staff）で使う合言葉。GASコード側のSTAFF_KEYと必ず同じ値にしてください ▼▼
   const STAFF_KEY = '09230813';
@@ -1825,7 +1840,7 @@
           '</div>' +
           '<div class="pay-method">' +
             '<h4>② 銀行振り込みをご希望の方はこちら</h4>' +
-            '<p>' + BANK_TRANSFER_INFO + '</p>' +
+            BANK_TRANSFER_INFO +
           '</div>' +
         '</div>';
       resultEl.style.display = 'block';
