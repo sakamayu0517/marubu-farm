@@ -867,7 +867,18 @@
         <div id="step-quick">
           <div class="field">
             <label for="r-ship-count">発送件数（お届け先の数） <span class="req">必須</span></label>
-            <input type="number" id="r-ship-count" min="1" max="5" step="1" value="1">
+            <select id="r-ship-count">
+              <option value="1">1件</option>
+              <option value="2">2件</option>
+              <option value="3">3件</option>
+              <option value="4">4件</option>
+              <option value="5">5件</option>
+              <option value="6">6件</option>
+              <option value="7">7件</option>
+              <option value="8">8件</option>
+              <option value="9">9件</option>
+              <option value="10">10件</option>
+            </select>
             <span class="hint">同じご注文で、違うお届け先へまとめて発送できます</span>
           </div>
 
@@ -1402,7 +1413,7 @@
   }
 
   function renderShipmentsQuick(){
-    const count = Math.min(Math.max(parseInt(shipCountEl.value, 10) || 1, 1), 5);
+    const count = Math.min(Math.max(parseInt(shipCountEl.value, 10) || 1, 1), 10);
     shipCountEl.value = count;
     const prevBlocks = Array.from(quickContainer.querySelectorAll('.ship-block')).map((block) => ({
       pref: block.querySelector('.ship-pref').value,
@@ -1446,6 +1457,7 @@
   }
 
   shipCountEl.addEventListener('input', renderShipmentsQuick);
+  shipCountEl.addEventListener('change', renderShipmentsQuick);
   renderShipmentsQuick();
 
   // ---------- STEP切り替え ----------
