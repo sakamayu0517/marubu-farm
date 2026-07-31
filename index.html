@@ -817,7 +817,7 @@
       </div>
       <div class="product-note">
         <strong>今季のご注文について</strong><br>
-        「シャインマスカットのみ」「巨峰のみ」「巨峰とシャインマスカットの詰め合わせ」からお選びいただけます。ご注文は<strong>5kgから</strong>承っております（1kg×5個の組み合わせも可能です）。巨峰のご注文受付は8月20日までとなります。いずれの品種も時期の商品がなくなり次第、受付を終了いたします。
+        「シャインマスカットのみ」「巨峰のみ」「巨峰とシャインマスカットの詰め合わせ」からお選びいただけます。ご注文は<strong>3kgから</strong>承っております。巨峰のご注文受付は8月20日までとなります。いずれの品種も時期の商品がなくなり次第、受付を終了いたします。
       </div>
       <div class="product-note" style="margin-top:16px;">
         家庭用・贈答用はもちろん、<strong>フルーツ取扱業者様への卸売販売</strong>も承っております。数量・お取引についてはお電話にてご相談ください。
@@ -830,16 +830,19 @@
       <div class="sec-head">
         <span class="eyebrow" style="justify-content:center;">ご注文方法</span>
         <h2>ご注文は注文フォームから承っています</h2>
-        <p>大変恐れ入りますが、お電話でのご注文は承っておりません。下記の注文フォームよりお申し込みください。ご注文は<strong>5kgから</strong>とさせていただいております。発送はご注文後1〜5日程で手配いたします。</p>
+        <p>大変恐れ入りますが、お電話でのご注文は承っておりません。下記の注文フォームよりお申し込みください。ご注文は<strong>3kgから</strong>とさせていただいております。発送はご注文後1〜5日程で手配いたします。</p>
       </div>
 
       <div class="shipping-note">
         <h3>送料について</h3>
-        <p>送料は商品代金とは別途必要です。発送にはクロネコヤマト（ヤマト運輸）を利用します。</p>
+        <p>送料は商品代金とは別途必要です。発送にはクロネコヤマト（ヤマト運輸）を利用します。1箱は最大5kgまでのため、5kgを超えるご注文は複数の箱に分けて発送し、送料は箱ごとに合算されます。</p>
         <table class="ship-table">
-          <tr><th>沖縄・離島・九州・四国・北海道</th><td>¥2,000<span class="ship-tag ship-tag--cool">クール便</span></td></tr>
-          <tr><th>上記以外の地域</th><td>¥1,500<span class="ship-tag ship-tag--normal">通常宅配</span></td></tr>
+          <tr><th>重量帯</th><th>通常宅配</th><th>クール便</th></tr>
+          <tr><td>1kg</td><td>¥1,000</td><td>¥1,800</td></tr>
+          <tr><td>2〜3kg</td><td>¥1,300</td><td>¥2,100</td></tr>
+          <tr><td>4〜5kg</td><td>¥1,600</td><td>¥2,500</td></tr>
         </table>
+        <p><span class="ship-tag ship-tag--cool">クール便対象</span> 北海道・沖縄・四国・中国地方（岡山・広島・山口・鳥取・島根）。それ以外の地域は通常宅配となります。</p>
         <p>離島（伊豆諸島・小笠原諸島・佐渡島・五島列島・種子島・屋久島など）へお届けの場合は、注文フォームのお届け先ごとにある「離島へのお届けです」にチェックを入れてください。都道府県の選択だけでは離島を自動判定できないためです。</p>
       </div>
 
@@ -1159,211 +1162,11 @@
       '<p class="note">※振込手数料はお客様のご負担となります。</p>' +
     '</div>';
 
-  // ▼▼ スタッフ管理画面（?mode=staff）で使う合言葉。GASコード側のSTAFF_KEYと必ず同じ値にしてください ▼▼
-  const STAFF_KEY = '09230813';
-
-  // ---------- スタッフ管理画面（?mode=staff でアクセスした場合のみ動作） ----------
-  (function initStaffView(){
+  // ---------- スタッフ管理画面（?mode=staff でアクセスした場合はGASの管理画面へ転送） ----------
+  (function redirectStaffView(){
     const params = new URLSearchParams(window.location.search);
     if (params.get('mode') !== 'staff') return;
-
-    document.getElementById('site-view').style.display = 'none';
-    const staffView = document.getElementById('staff-view');
-    staffView.style.display = 'block';
-
-    const STATUSES = ['未対応', '確認済み', '発送準備中', '発送済み', '完了'];
-    let ordersCache = [];
-    let activeFilter = 'all';
-
-    const boardEl = document.getElementById('staff-board');
-    const loadingEl = document.getElementById('staff-loading');
-    const errorEl = document.getElementById('staff-error');
-    const summaryEl = document.getElementById('staff-summary-bar');
-    const filterEl = document.getElementById('staff-filter-bar');
-    const lastUpdatedEl = document.getElementById('staff-last-updated');
-
-    function show(el){
-      [boardEl, loadingEl, errorEl].forEach((e) => { e.style.display = 'none'; });
-      el.style.display = el === boardEl ? 'grid' : 'block';
-    }
-
-    async function loadOrders(){
-      show(loadingEl);
-      try{
-        const url = GAS_ENDPOINT + '?key=' + encodeURIComponent(STAFF_KEY) + '&t=' + Date.now();
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.result !== 'success') throw new Error(data.message || '取得に失敗しました');
-        ordersCache = data.orders || [];
-        lastUpdatedEl.textContent = '最終更新：' + new Date().toLocaleString('ja-JP');
-        renderBoard();
-        show(boardEl);
-      }catch(err){
-        errorEl.textContent = '読み込みに失敗しました。GASのURL・合言葉（STAFF_KEY）、公開設定（アクセス：全員）をご確認ください。（' + err.message + '）';
-        show(errorEl);
-      }
-    }
-
-    function renderSummary(){
-      summaryEl.innerHTML = '';
-      const total = ordersCache.length;
-      const needCall = ordersCache.filter((o) => o['メール連絡可否'] === '不可（電話連絡）').length;
-      const unpaid = ordersCache.filter((o) => !o['決済確認']).length;
-      [['総注文数', total], ['要電話連絡', needCall], ['決済未確認', unpaid]].forEach(([label, val]) => {
-        const el = document.createElement('div');
-        el.className = 'staff-summary-pill';
-        el.innerHTML = '<strong>' + val + '</strong>' + label;
-        summaryEl.appendChild(el);
-      });
-    }
-
-    function renderFilters(){
-      filterEl.innerHTML = '';
-      [['all', 'すべて']].concat(STATUSES.map((s) => [s, s])).forEach(([val, label]) => {
-        const chip = document.createElement('button');
-        chip.className = 'staff-filter-chip' + (activeFilter === val ? ' active' : '');
-        chip.textContent = label;
-        chip.addEventListener('click', () => { activeFilter = val; renderBoard(); });
-        filterEl.appendChild(chip);
-      });
-    }
-
-    function buildOrderCard(order){
-      const card = document.createElement('div');
-      card.className = 'staff-order-card';
-
-      const top = document.createElement('div');
-      top.className = 'oc-top';
-      const name = document.createElement('span');
-      name.className = 'oc-name';
-      name.textContent = order['お名前'] || '（お名前未入力）';
-      const date = document.createElement('span');
-      date.className = 'oc-date';
-      date.textContent = order['送信日時']
-        ? new Date(order['送信日時']).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-        : '';
-      top.appendChild(name); top.appendChild(date);
-      card.appendChild(top);
-
-      const tel = document.createElement('div');
-      tel.className = 'oc-row';
-      tel.textContent = '電話：' + (order['電話番号'] || '未入力');
-      card.appendChild(tel);
-
-      if (order['メール連絡可否'] === '不可（電話連絡）'){
-        const warn = document.createElement('span');
-        warn.className = 'oc-tag oc-tag--warn';
-        warn.textContent = '要電話連絡（メール未入力）';
-        card.appendChild(warn);
-      }
-
-      const total = document.createElement('div');
-      total.className = 'oc-total';
-      total.textContent = order['総合計金額'] ? ('合計 ¥' + Number(order['総合計金額']).toLocaleString('ja-JP')) : '金額未計算';
-      card.appendChild(total);
-
-      if (order['決済確認']){
-        const ok = document.createElement('span');
-        ok.className = 'oc-tag oc-tag--ok';
-        ok.textContent = '決済確認済み';
-        card.appendChild(ok);
-      }
-      if (order['発送完了']){
-        const ok2 = document.createElement('span');
-        ok2.className = 'oc-tag oc-tag--ok';
-        ok2.textContent = '発送完了';
-        card.appendChild(ok2);
-      }
-
-      if (order['注文内容まとめ']){
-        const summary = document.createElement('div');
-        summary.className = 'oc-summary';
-        summary.textContent = order['注文内容まとめ'];
-        card.appendChild(summary);
-      }
-
-      const controls = document.createElement('div');
-      controls.className = 'oc-controls';
-
-      const statusSelect = document.createElement('select');
-      STATUSES.forEach((s) => {
-        const opt = document.createElement('option');
-        opt.value = s; opt.textContent = s;
-        if (order['ステータス'] === s) opt.selected = true;
-        statusSelect.appendChild(opt);
-      });
-      statusSelect.addEventListener('change', () => updateOrder(order.row, 'ステータス', statusSelect.value));
-      controls.appendChild(statusSelect);
-
-      const payLabel = document.createElement('label');
-      payLabel.className = 'oc-check';
-      const payCb = document.createElement('input');
-      payCb.type = 'checkbox'; payCb.checked = !!order['決済確認'];
-      payCb.addEventListener('change', () => updateOrder(order.row, '決済確認', payCb.checked));
-      payLabel.appendChild(payCb);
-      payLabel.appendChild(document.createTextNode('決済確認'));
-      controls.appendChild(payLabel);
-
-      const shipLabel = document.createElement('label');
-      shipLabel.className = 'oc-check';
-      const shipCb = document.createElement('input');
-      shipCb.type = 'checkbox'; shipCb.checked = !!order['発送完了'];
-      shipCb.addEventListener('change', () => updateOrder(order.row, '発送完了', shipCb.checked));
-      shipLabel.appendChild(shipCb);
-      shipLabel.appendChild(document.createTextNode('発送完了'));
-      controls.appendChild(shipLabel);
-
-      card.appendChild(controls);
-      return card;
-    }
-
-    function renderBoard(){
-      renderSummary();
-      renderFilters();
-      boardEl.innerHTML = '';
-      const columns = activeFilter === 'all' ? STATUSES : [activeFilter];
-      columns.forEach((status) => {
-        const col = document.createElement('div');
-        const list = ordersCache.filter((o) => (o['ステータス'] || '未対応') === status);
-
-        const head = document.createElement('div');
-        head.className = 'staff-col-head';
-        head.innerHTML = '<span>' + status + '</span><span class="staff-col-count">' + list.length + '</span>';
-        col.appendChild(head);
-
-        const body = document.createElement('div');
-        body.className = 'staff-col-body';
-        if (list.length === 0){
-          const empty = document.createElement('div');
-          empty.className = 'staff-empty-col';
-          empty.textContent = 'なし';
-          body.appendChild(empty);
-        } else {
-          list.forEach((o) => body.appendChild(buildOrderCard(o)));
-        }
-        col.appendChild(body);
-        boardEl.appendChild(col);
-      });
-    }
-
-    async function updateOrder(row, field, value){
-      const target = ordersCache.find((o) => o.row === row);
-      if (target) target[field] = value;
-      renderBoard();
-      try{
-        const params = new URLSearchParams({ action: 'update', key: STAFF_KEY, row: row, field: field, value: value });
-        await fetch(GAS_ENDPOINT, {
-          method: 'POST', mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: params.toString(),
-        });
-      }catch(err){
-        alert('更新の送信に失敗しました。再読み込みしてやり直してください。');
-      }
-    }
-
-    document.getElementById('staff-btn-refresh').addEventListener('click', loadOrders);
-    loadOrders();
+    window.location.replace(GAS_ENDPOINT);
   })();
 
   // ▼▼ 商品代金（1kgあたり・円） ▼▼
@@ -1377,16 +1180,15 @@
   const isKyohoClosed = () => new Date() > KYOHO_DEADLINE;
   const availableItemOptions = () => isKyohoClosed() ? ITEM_OPTIONS.filter((i) => i !== '巨峰') : ITEM_OPTIONS;
 
-  // ▼▼ 送料（円）… クール対象地域以外は一律。実際の金額に書き換えてください ▼▼
-  const SHIPPING_FLAT_RATE = 1500;
-  // ▼▼ クール宅急便対象地域（沖縄・離島・九州・四国・北海道）の送料（円）… 実際の金額に書き換えてください ▼▼
-  const SHIPPING_COOL_RATE = 2000;
+  // ▼▼ 送料（円）… 重量帯ごとの料金（1箱は最大5kgまで。5kg超は複数箱に分けて合算します） ▼▼
+  const SHIPPING_TIERS_NORMAL = { 1: 1000, 2: 1300, 3: 1300, 4: 1600, 5: 1600 };
+  const SHIPPING_TIERS_COOL   = { 1: 1800, 2: 2100, 3: 2100, 4: 2500, 5: 2500 };
   // ▼▼ 熨斗（のし）をご希望の場合の追加料金（円・お届け先1件あたり） ▼▼
   const NOSHI_FEE = 150;
-  // クール宅急便対象の都道府県
+  // クール宅急便対象の都道府県（北海道・沖縄・四国・中国地方）
   const COOL_PREFECTURES = [
     '北海道','沖縄県',
-    '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県',
+    '岡山県','広島県','山口県','鳥取県','島根県',
     '徳島県','香川県','愛媛県','高知県',
   ];
   // 都道府県の選択肢（プルダウン用）
@@ -1402,6 +1204,22 @@
 
   const yen = (n) => '¥' + Math.round(n).toLocaleString('ja-JP');
   const isCoolPref = (pref) => COOL_PREFECTURES.includes(pref);
+
+  // 5kgまでの箱に分けて送料を合算する（5kg超は複数箱の組み合わせになります）
+  function calcShippingCost(totalKg, cool){
+    const tiers = cool ? SHIPPING_TIERS_COOL : SHIPPING_TIERS_NORMAL;
+    let remaining = totalKg;
+    let cost = 0;
+    while (remaining > 5){
+      cost += tiers[5];
+      remaining -= 5;
+    }
+    if (remaining > 0){
+      const tierKg = Math.max(1, Math.min(5, Math.ceil(remaining)));
+      cost += tiers[tierKg];
+    }
+    return cost;
+  }
 
   // ---------- STEP 1：かんたん入力（発送先ごとに品種とkgだけ） ----------
   const shipCountEl = document.getElementById('r-ship-count');
@@ -1539,13 +1357,13 @@
       const subtotal = s.lines.reduce((sum, l) => sum + l.qty, 0);
       const subEl = block.querySelector('.ship-subtotal');
       const okPref = !!s.pref;
-      const okQty = subtotal >= 5;
+      const okQty = subtotal >= 3;
       if (!okPref || !okQty) allOk = false;
       subEl.innerHTML = `合計：<strong>${subtotal}kg</strong> ` +
-        (okQty ? '<span class="ship-ok">✓ 5kg以上OK</span>' : '<span class="ship-warn">（5kgから承ります）</span>');
+        (okQty ? '<span class="ship-ok">✓ 3kg以上OK</span>' : '<span class="ship-warn">（3kgから承ります）</span>');
     });
     nextBtn.disabled = !allOk || shipments.length === 0;
-    quickStatusEl.textContent = allOk ? '' : 'すべてのお届け先で、都道府県の選択と合計5kg以上の入力をお願いします。';
+    quickStatusEl.textContent = allOk ? '' : 'すべてのお届け先で、都道府県の選択と合計3kg以上の入力をお願いします。';
   }
 
   shipCountEl.addEventListener('input', renderShipmentsQuick);
@@ -1727,15 +1545,17 @@
     return Array.from(detailContainer.querySelectorAll('.ship-detail-block')).map((block) => {
       const lines = JSON.parse(block.dataset.lines);
       const goods = lines.reduce((sum, l) => sum + (PRICE_PER_KG[l.item] || 0) * l.qty, 0);
+      const totalKg = lines.reduce((sum, l) => sum + l.qty, 0);
       const isIsland = block.querySelector('.ship-island').checked;
       const cool = isCoolPref(block.dataset.pref) || isIsland;
-      const ship = cool ? SHIPPING_COOL_RATE : SHIPPING_FLAT_RATE;
+      const ship = calcShippingCost(totalKg, cool);
       const noshi = block.querySelector('.ship-noshi').checked;
       const noshiFee = noshi ? NOSHI_FEE : 0;
       const timeSlot = block.querySelector('.ship-timeslot').value;
       return {
         pref: block.dataset.pref,
         lines: lines,
+        totalKg: totalKg,
         name: block.querySelector('.ship-name').value.trim(),
         tel: block.querySelector('.ship-tel').value.trim(),
         zip: block.querySelector('.ship-zip').value.trim(),
@@ -1767,7 +1587,9 @@
       linesWrap.appendChild(goodsRow);
       const shipRow = document.createElement('div');
       shipRow.className = 'estimate-row';
-      shipRow.innerHTML = `<span>送料（${s.cool ? 'クール宅急便' : '通常宅配'}）</span><strong>${yen(s.ship)}</strong>`;
+      const boxCount = Math.ceil(s.totalKg / 5);
+      const boxNote = boxCount > 1 ? `／${boxCount}箱に分けて発送` : '';
+      shipRow.innerHTML = `<span>送料（${s.cool ? 'クール宅急便' : '通常宅配'}・計${s.totalKg}kg${boxNote}）</span><strong>${yen(s.ship)}</strong>`;
       linesWrap.appendChild(shipRow);
       if (s.noshi){
         const noshiRow = document.createElement('div');
@@ -1880,7 +1702,7 @@
       '',
     ];
     data.shipments.forEach((s, i) => {
-      lines.push(`【お届け先${i + 1}】${s.pref}（${s.cool ? 'クール宅急便' : '通常宅配'}）`);
+      lines.push(`【お届け先${i + 1}】${s.pref}（${s.cool ? 'クール宅急便' : '通常宅配'}・計${s.totalKg}kg）`);
       lines.push(`　お名前：${s.name}`);
       lines.push(`　電話番号：${s.tel}`);
       lines.push(`　郵便番号：${s.zip}`);
@@ -1986,7 +1808,7 @@
 
       const shipmentSummaryHtml = data.shipments.map((s, i) =>
         '<div class="oc-summary" style="margin-top:8px;">' +
-          '【お届け先' + (i + 1) + '】' + s.pref + '（' + (s.cool ? 'クール宅急便' : '通常宅配') + '）\n' +
+          '【お届け先' + (i + 1) + '】' + s.pref + '（' + (s.cool ? 'クール宅急便' : '通常宅配') + '・計' + s.totalKg + 'kg）\n' +
           'お名前：' + s.name + '\n' +
           'ご住所：〒' + s.zip + ' ' + s.address + '\n' +
           'ご注文：' + s.lines.map((l) => `${l.item} ${l.qty}kg`).join(' / ') + '\n' +
