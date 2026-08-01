@@ -916,29 +916,61 @@
       <form id="reserve-form" class="form-card" novalidate>
         <div class="field">
           <label for="r-name">ご注文者様のお名前 <span class="req">必須</span></label>
-          <input type="text" id="r-name" name="name" required placeholder="山梨 太郎">
+          <input type="text" id="r-name" name="name" required placeholder="山梨 太郎" autocomplete="name">
         </div>
 
         <div class="field-row">
           <div class="field">
             <label for="r-tel">電話番号 <span class="req">必須</span></label>
-            <input type="tel" id="r-tel" name="tel" required placeholder="090-1234-5678">
+            <input type="tel" id="r-tel" name="tel" required placeholder="090-1234-5678" autocomplete="tel">
           </div>
           <div class="field">
             <label for="r-email">メールアドレス</label>
-            <input type="email" id="r-email" name="email" placeholder="任意（追跡番号を知りたい方はご入力ください）">
+            <input type="email" id="r-email" name="email" placeholder="任意（追跡番号を知りたい方はご入力ください）" autocomplete="email">
             <span class="hint">追跡番号をお知りになりたい方はご入力ください</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>ご依頼主様情報 <span class="req">必須</span></label>
+          <span class="hint">実際に配送をご依頼される方の情報をご入力ください。</span>
+          <label class="oc-check" style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:400;font-size:.88rem;color:var(--ink-soft);">
+            <input type="checkbox" id="r-requester-same"> ご注文者様と同じ（お名前・電話番号のみコピーします）
+          </label>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-requester-name">ご依頼主様お名前 <span class="req">必須</span></label>
+            <input type="text" id="r-requester-name" required placeholder="山梨 太郎" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="r-requester-tel">ご依頼主様電話番号 <span class="req">必須</span></label>
+            <input type="tel" id="r-requester-tel" required placeholder="090-1234-5678" autocomplete="tel">
           </div>
         </div>
 
         <div class="field-row">
           <div class="field">
-            <label for="r-my-zip">ご注文者様ご自身の郵便番号 <span class="req">必須</span></label>
-            <input type="text" id="r-my-zip" placeholder="000-0000" required>
+            <label for="r-requester-zip">ご依頼主様郵便番号 <span class="req">必須</span></label>
+            <input type="text" id="r-requester-zip" required placeholder="000-0000" autocomplete="postal-code" inputmode="numeric">
+            <span class="hint" id="r-requester-zip-status"></span>
           </div>
           <div class="field">
-            <label for="r-my-address">ご注文者様ご自身のご住所 <span class="req">必須</span></label>
-            <input type="text" id="r-my-address" placeholder="山梨県〜" required>
+            <label for="r-requester-address">ご依頼主様ご住所 <span class="req">必須</span></label>
+            <input type="text" id="r-requester-address" required placeholder="山梨県〜" autocomplete="address-line1">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="r-my-zip">ご注文者様ご自身の郵便番号</label>
+            <input type="text" id="r-my-zip" placeholder="000-0000" autocomplete="postal-code">
+            <span class="hint">ご自身が発送先の1つである場合のみご入力ください（任意）</span>
+          </div>
+          <div class="field">
+            <label for="r-my-address">ご注文者様ご自身のご住所</label>
+            <input type="text" id="r-my-address" placeholder="山梨県〜" autocomplete="address-line1">
           </div>
         </div>
 
@@ -1123,18 +1155,12 @@
       <div class="sec-head">
         <span class="eyebrow" style="justify-content:center;">発送状況の確認</span>
         <h2>ご注文の状況を確認する</h2>
-        <p>ご注文時にお伝えした注文番号と、ご注文者様のお名前（苗字）を入力してください。</p>
+        <p>ご注文時にお伝えした注文番号を入力してください。</p>
       </div>
       <div class="status-check-card">
-        <div class="field-row">
-          <div class="field">
-            <label for="sc-order-number">注文番号 <span class="req">必須</span></label>
-            <input type="text" id="sc-order-number" placeholder="例：MB2607311423-482">
-          </div>
-          <div class="field">
-            <label for="sc-last-name">お名前（苗字） <span class="req">必須</span></label>
-            <input type="text" id="sc-last-name" placeholder="例：野沢">
-          </div>
+        <div class="field">
+          <label for="sc-order-number">注文番号 <span class="req">必須</span></label>
+          <input type="text" id="sc-order-number" placeholder="例：2607311423482" inputmode="numeric">
         </div>
         <div class="form-actions">
           <button type="button" id="sc-check-btn" class="btn btn-primary">確認する</button>
@@ -1655,9 +1681,47 @@
     const datePart = String(now.getFullYear()).slice(2) + pad(now.getMonth() + 1) + pad(now.getDate());
     const timePart = pad(now.getHours()) + pad(now.getMinutes());
     const rand = String(Math.floor(Math.random() * 900) + 100);
-    currentOrderNumber = 'MB' + datePart + timePart + '-' + rand;
+    currentOrderNumber = datePart + timePart + rand;
     return currentOrderNumber;
   }
+
+  document.getElementById('r-requester-same').addEventListener('change', function(){
+    const nameInput = document.getElementById('r-requester-name');
+    const telInput = document.getElementById('r-requester-tel');
+    if (this.checked){
+      nameInput.value = document.getElementById('r-name').value;
+      telInput.value = document.getElementById('r-tel').value;
+      nameInput.readOnly = true; telInput.readOnly = true;
+    } else {
+      nameInput.readOnly = false; telInput.readOnly = false;
+    }
+  });
+
+  async function lookupAddressByZip(zipInputId, addressInputId, statusElId){
+    const zipInput = document.getElementById(zipInputId);
+    const addressInput = document.getElementById(addressInputId);
+    const statusEl2 = statusElId ? document.getElementById(statusElId) : null;
+    const digits = zipInput.value.replace(/[^0-9]/g, '');
+    if (digits.length !== 7) return;
+    if (statusEl2) statusEl2.textContent = '住所を検索しています…';
+    try{
+      const res = await fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + digits);
+      const data = await res.json();
+      if (data.results && data.results.length){
+        const r = data.results[0];
+        addressInput.value = r.address1 + r.address2 + r.address3;
+        if (statusEl2) statusEl2.textContent = '';
+      } else {
+        if (statusEl2) statusEl2.textContent = '該当する住所が見つかりませんでした。住所を直接ご入力ください。';
+      }
+    }catch(err){
+      if (statusEl2) statusEl2.textContent = '住所の自動入力に失敗しました。住所を直接ご入力ください。';
+    }
+  }
+
+  document.getElementById('r-requester-zip').addEventListener('blur', function(){
+    lookupAddressByZip('r-requester-zip', 'r-requester-address', 'r-requester-zip-status');
+  });
 
   function buildReserveData(){
     const val = (id) => document.getElementById(id).value.trim();
@@ -1670,12 +1734,20 @@
     const shipTotal = shipments.reduce((s, x) => s + x.ship, 0);
     const paymentMethod = radio('paymentMethod');
     const isBank = paymentMethod === '銀行振込';
+    const requesterName = val('r-requester-name');
+    const requesterTel = val('r-requester-tel');
+    const requesterZip = val('r-requester-zip');
+    const requesterAddress = val('r-requester-address');
     return {
       orderNumber: ensureOrderNumber(),
       name: val('r-name'),
       tel: val('r-tel'),
       email: val('r-email'),
-      shipFrom: '山梨県山梨市東666-1（まるぶ農園）',
+      requesterName: requesterName,
+      requesterTel: requesterTel,
+      requesterZip: requesterZip,
+      requesterAddress: requesterAddress,
+      shipFrom: `${requesterName}（〒${requesterZip} ${requesterAddress}／${requesterTel}）`,
       shipments: shipments,
       shippingSchedule: 'ご注文後1〜5日程で発送',
       note: val('r-note'),
@@ -1805,6 +1877,10 @@
         tel: data.tel,
         email: data.email,
         shipFrom: data.shipFrom,
+        requesterName: data.requesterName,
+        requesterTel: data.requesterTel,
+        requesterZip: data.requesterZip,
+        requesterAddress: data.requesterAddress,
         shippingSchedule: data.shippingSchedule,
         note: data.note,
         goodsAmount: data.goodsAmount,
@@ -1911,10 +1987,9 @@
   document.getElementById('sc-check-btn').addEventListener('click', async function(){
     const btn = this;
     const orderNumber = document.getElementById('sc-order-number').value.trim();
-    const lastName = document.getElementById('sc-last-name').value.trim();
     const resultEl = document.getElementById('sc-result');
-    if (!orderNumber || !lastName){
-      resultEl.innerHTML = '<p class="status-result-note">注文番号とお名前の両方を入力してください。</p>';
+    if (!orderNumber){
+      resultEl.innerHTML = '<p class="status-result-note">注文番号を入力してください。</p>';
       return;
     }
     btn.disabled = true;
@@ -1922,12 +1997,11 @@
     resultEl.innerHTML = '';
     try{
       const url = GAS_ENDPOINT + '?action=lookup'
-        + '&orderNumber=' + encodeURIComponent(orderNumber)
-        + '&lastName=' + encodeURIComponent(lastName);
+        + '&orderNumber=' + encodeURIComponent(orderNumber);
       const res = await fetch(url);
       const data = await res.json();
       if (data.result === 'not_found'){
-        resultEl.innerHTML = '<p class="status-result-note">該当するご注文が見つかりませんでした。注文番号・お名前をご確認のうえ、もう一度お試しください。</p>';
+        resultEl.innerHTML = '<p class="status-result-note">該当するご注文が見つかりませんでした。注文番号をご確認のうえ、もう一度お試しください。</p>';
       } else if (data.result === 'success'){
         const currentIndex = STATUS_STEPS.indexOf(data.status);
         const stepsHtml = STATUS_STEPS.map((s, i) => {
