@@ -952,25 +952,13 @@
 
         <div class="field-row">
           <div class="field">
-            <label for="r-requester-zip">ご依頼主様郵便番号 <span class="req">必須</span></label>
-            <input type="text" id="r-requester-zip" required placeholder="000-0000" autocomplete="postal-code" inputmode="numeric">
-            <span class="hint" id="r-requester-zip-status"></span>
-          </div>
-          <div class="field">
             <label for="r-requester-address">ご依頼主様ご住所 <span class="req">必須</span></label>
             <input type="text" id="r-requester-address" required placeholder="山梨県〜" autocomplete="address-line1">
           </div>
-        </div>
-
-        <div class="field-row">
           <div class="field">
-            <label for="r-my-zip">ご注文者様ご自身の郵便番号</label>
-            <input type="text" id="r-my-zip" placeholder="000-0000" autocomplete="postal-code">
-            <span class="hint">ご自身が発送先の1つである場合のみご入力ください（任意）</span>
-          </div>
-          <div class="field">
-            <label for="r-my-address">ご注文者様ご自身のご住所</label>
-            <input type="text" id="r-my-address" placeholder="山梨県〜" autocomplete="address-line1">
+            <label for="r-requester-zip">ご依頼主様郵便番号 <span class="req">必須</span></label>
+            <input type="text" id="r-requester-zip" required placeholder="000-0000" autocomplete="postal-code" inputmode="numeric">
+            <span class="hint" id="r-requester-zip-status"></span>
           </div>
         </div>
 
@@ -1503,7 +1491,7 @@
       const sameOrdererCb = document.createElement('input');
       sameOrdererCb.type = 'checkbox'; sameOrdererCb.className = 'same-as-orderer';
       sameOrdererLabel.appendChild(sameOrdererCb);
-      sameOrdererLabel.appendChild(document.createTextNode('ご注文者様（ご自身）と同じお届け先にする'));
+      sameOrdererLabel.appendChild(document.createTextNode('ご依頼主様と同じお届け先にする'));
       checks.appendChild(sameOrdererLabel);
       block.appendChild(checks);
 
@@ -1513,10 +1501,10 @@
         const addrInput = block.querySelector('.ship-address');
         const telInput = block.querySelector('.ship-tel');
         if (this.checked){
-          nameInput.value = document.getElementById('r-name').value;
-          telInput.value = document.getElementById('r-tel').value;
-          zipInput.value = document.getElementById('r-my-zip').value;
-          addrInput.value = document.getElementById('r-my-address').value;
+          nameInput.value = document.getElementById('r-requester-name').value;
+          telInput.value = document.getElementById('r-requester-tel').value;
+          zipInput.value = document.getElementById('r-requester-zip').value;
+          addrInput.value = document.getElementById('r-requester-address').value;
           nameInput.readOnly = true; zipInput.readOnly = true; addrInput.readOnly = true; telInput.readOnly = true;
         } else {
           nameInput.readOnly = false; zipInput.readOnly = false; addrInput.readOnly = false; telInput.readOnly = false;
